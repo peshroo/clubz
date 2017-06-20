@@ -5,7 +5,12 @@ class ClubsController < ApplicationController
   end
 
   def show
+    require_login
+
+
     @club = Club.find(params[:id])
+
+    require_ownership_or_role
   end
 
   def new
@@ -39,6 +44,23 @@ class ClubsController < ApplicationController
     else
       flash.now[:alert] = @club.errors.full_messages
       render :edit
+    end
+  end
+
+  private
+  def require_login
+    unless current_user
+      flash[:alert] = ["Must be logged in to enter club"]
+      redirect_to root_path
+    end
+  end
+
+  def require_ownership_or_role
+    unless User::ALLOWED_ROLES.include?(current_user.role)
+      unless current_user.clubs.include?(@club)
+        flash[:alert] = ["No!"]
+        redirect_to root_path
+      end
     end
   end
 
